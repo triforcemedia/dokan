@@ -229,9 +229,9 @@ final class WeDevs_Dokan {
         add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), array( $this, 'plugin_action_links' ) );
 
         add_action( 'in_plugin_update_message-dokan-lite/dokan.php', array( 'Dokan_Installer', 'in_plugin_update_message' ) );
-        
+
         //Dokan Email filters for WC Email
-        add_filter( 'woocommerce_email_classes', array( $this, 'load_dokan_emails' ), 35 );
+        add_filter( 'woocommerce_email_classes', array( $this, 'load_dokan_emails' ) );
         add_filter( 'woocommerce_template_directory', array( $this, 'set_email_template_directory' ), 15, 2 );
         add_filter( 'woocommerce_email_actions' , array( $this, 'register_email_actions' ) );
 
@@ -546,6 +546,7 @@ final class WeDevs_Dokan {
             require_once $inc_dir . 'admin/admin.php';
             require_once $inc_dir . 'admin/ajax.php';
             require_once $inc_dir . 'admin-functions.php';
+            require_once $lib_dir . '/class-weforms-upsell.php';
         } else {
             require_once $inc_dir . 'template-tags.php';
         }
@@ -619,6 +620,7 @@ final class WeDevs_Dokan {
             new Dokan_Admin_User_Profile();
             Dokan_Admin_Ajax::init();
             new Dokan_Upgrade();
+            new WeForms_Upsell( '409' );
         } else {
             new Dokan_Pageviews();
         }
@@ -814,71 +816,57 @@ final class WeDevs_Dokan {
 
         return $links;
     }
-    
+
     /**
      * Add Dokan Email classes in WC Email
-     * 
+     *
      * @since 2.6.8
-     * 
+     *
      * @param array $wc_emails
-     * 
+     *
      * @return $wc_emails
      */
     function load_dokan_emails( $wc_emails ){
-        $wc_emails['Dokan_Email_New_Product']           = include( DOKAN_INC_DIR.'/emails/class-dokan-email-new-product.php' );
-        $wc_emails['Dokan_Email_New_Product_Pending']   = include( DOKAN_INC_DIR.'/emails/class-dokan-email-new-product-pending.php' );
-        $wc_emails['Dokan_Email_Product_Published']     = include( DOKAN_INC_DIR.'/emails/class-dokan-email-product-published.php' );
-        $wc_emails['Dokan_Email_New_Seller']            = include( DOKAN_INC_DIR.'/emails/class-dokan-email-new-seller-registered.php' );
-        $wc_emails['Dokan_Vendor_Withdraw_Request']     = include( DOKAN_INC_DIR.'/emails/class-dokan-vendor-withdraw-request.php' );
-        $wc_emails['Dokan_Email_Withdraw_Approved']     = include( DOKAN_INC_DIR.'/emails/class-dokan-withdraw-approved.php' );
-        $wc_emails['Dokan_Email_Withdraw_Cancelled']    = include( DOKAN_INC_DIR.'/emails/class-dokan-withdraw-cancelled.php' );
-        $wc_emails['Dokan_Email_Contact_Seller']        = include( DOKAN_INC_DIR.'/emails/class-dokan-email-contact-seller.php' );
+        $wc_emails['Dokan_Email_New_Product'] = include( DOKAN_INC_DIR.'/emails/class-dokan-email-new-product.php' );
         return $wc_emails;
     }
-    
+
     /**
      * Register Dokan Email actions for WC
-     * 
+     *
      * @since 2.6.8
-     * 
+     *
      * @param array $actions
-     * 
+     *
      * @return $actions
      */
     function register_email_actions( $actions ) {
-        
+
         $dokan_email_actions = apply_filters( 'dokan_email_actions', array(
             'dokan_new_product_added',
-            'dokan_email_trigger_new_pending_product',
-            'dokan_new_seller_created',
-            'dokan_after_withdraw_request',
-            'dokan_withdraw_request_approved',
-            'dokan_withdraw_request_cancelled',
-            'dokan_pending_product_published_notification',
-            'dokan_trigger_contact_seller_mail',
         ) );
-        
+
         foreach ( $dokan_email_actions as $action ) {
             $actions[] = $action;
         }
-        
+
         return $actions;
     }
-    
+
     /**
      * Set template override directory for Dokan Emails
-     * 
+     *
      * @since 2.6.8
-     * 
+     *
      * @param string $template_dir
-     * 
+     *
      * @param string $template
-     * 
+     *
      * @return string
      */
     function set_email_template_directory( $template_dir, $template ){
-        
-        $dokan_emails = apply_filters( 'dokan_email_list', 
+
+        $dokan_emails = apply_filters( 'dokan_email_list',
                                     array(
                                         'new-product.php',
                                         'new-product-pending.php',
@@ -890,8 +878,8 @@ final class WeDevs_Dokan {
                                         'withdraw-approve.php',
                                     )
                         );
-        
-        $template_name = basename( $template );
+
+        $template_name = substr( $template, strpos( $template , '/') + 1 );
 
         if ( in_array( $template_name, $dokan_emails ) ) {
             return 'dokan';
@@ -899,7 +887,7 @@ final class WeDevs_Dokan {
 
         return $template_dir;
     }
-    
+
 } // WeDevs_Dokan
 
 /**
